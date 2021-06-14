@@ -1,5 +1,6 @@
 package com.github.yannicklamprecht.spigot.tools
 
+import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
@@ -10,7 +11,7 @@ import java.io.File
 import java.nio.file.Path
 
 @CacheableTask
-abstract class RemapJar : Jar() {
+abstract class RemapJar : DefaultTask() {
 
     @get:Input
     abstract val spigotVersion: Property<String>
@@ -24,7 +25,7 @@ abstract class RemapJar : Jar() {
 
     fun artifact(): File {
         return libDir.resolve(
-            "${project.tasks.getByName("jar").outputs.files.singleFile.nameWithoutExtension}${
+            "${project.description}-${project.version}${
                 outputClassifier.map { "-${it}" }.getOrElse("")
             }.jar")
     }
@@ -33,14 +34,15 @@ abstract class RemapJar : Jar() {
 
     @TaskAction
     fun remapJar() {
-        if(!mojangMapped.get()){
+        if (!mojangMapped.get()) {
             return
         }
 
+        val inputFile = project.tasks.getByName("jar").outputs.files.single()
         val tempFile = libDir.resolve("temp.jar")
         remap(
             "--reverse",
-            inputPath = project.tasks.getByName("jar").outputs.files.singleFile,
+            inputPath = inputFile,
             outputPath = tempFile,
             mapEnding = "maps-mojang.txt",
             spigotVersion = spigotVersion.get(),
@@ -48,7 +50,6 @@ abstract class RemapJar : Jar() {
         )
         logger.lifecycle("Remap from Obf to Spigot")
         val artifact = artifact()
-        logger.lifecycle(artifact.absolutePath)
         remap(
             inputPath = tempFile,
             outputPath = artifact,
@@ -72,8 +73,15 @@ abstract class RemapJar : Jar() {
         val mutableArguments = mutableListOf(
             "java",
             "-cp",
-            "${projectDir.toPath().resolve(specialsourePath)}:${spigotGroupMavenRoot().resolve(Path.of("spigot",
-                spigotVersion, "spigot-${spigotVersion}-remapped-${if(obf) "obf" else "mojang"}.jar"))}",
+            "${projectDir.toPath().resolve(specialsourePath)}:${
+                spigotGroupMavenRoot().resolve(
+                    Path.of(
+                        "spigot",
+                        spigotVersion,
+                        "spigot-${spigotVersion}-remapped-${if (obf) "obf" else "mojang"}.jar"
+                    )
+                )
+            }",
             "net.md_5.specialsource.SpecialSource",
             "--live",
             "-i",
