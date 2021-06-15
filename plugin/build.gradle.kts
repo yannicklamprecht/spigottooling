@@ -49,7 +49,7 @@ dependencies {
 }
 
 group = "com.github.yannicklamprecht.spigot.tools"
-version = "1.0.0"
+version = "1.0.1-SNAPSHOT"
 
 gradlePlugin {
     plugins {
