@@ -1,9 +1,7 @@
 package com.github.yannicklamprecht.spigot.tools
 
-import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.internal.artifacts.ivyservice.modulecache.artifacts.ArtifactAtRepositoryKey
 import org.gradle.api.tasks.bundling.Jar
 import java.net.URL
 import java.nio.file.Path

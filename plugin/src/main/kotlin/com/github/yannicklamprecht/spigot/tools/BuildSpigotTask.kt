@@ -9,14 +9,13 @@ abstract class BuildSpigotTask : DefaultTask() {
 
     @get:Input
     abstract val version: Property<String>
+
     @get:Input
     abstract val mojangMapped: Property<Boolean>
 
 
-
-
     @TaskAction
-    fun build(){
+    fun build() {
 
         val additionalParams = mutableListOf(
             "java",
@@ -27,7 +26,7 @@ abstract class BuildSpigotTask : DefaultTask() {
             "--disable-java-check",
         )
 
-        if(mojangMapped.get()) {
+        if (mojangMapped.get()) {
             additionalParams.addAll(listOf("--remapped"))
         }
 

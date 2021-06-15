@@ -3,25 +3,27 @@
  */
 package com.github.yannicklamprecht.spigot.tools
 
-import java.io.File
 import org.gradle.testkit.runner.GradleRunner
+import java.io.File
 import kotlin.test.Test
-import kotlin.test.assertTrue
 
 /**
  * A simple functional test for the 'com.github.yannicklamprecht.spigottools.greeting' plugin.
  */
 class SpigottoolsPluginFunctionalTest {
-    @Test fun `can run task`() {
+    @Test
+    fun `can run task`() {
         // Setup the test build
         val projectDir = File("build/functionalTest")
         projectDir.mkdirs()
         projectDir.resolve("settings.gradle").writeText("")
-        projectDir.resolve("build.gradle").writeText("""
+        projectDir.resolve("build.gradle").writeText(
+            """
             plugins {
                 id('com.github.yannicklamprecht.spigottools')
             }
-        """)
+        """
+        )
 
         // Run the build
         val runner = GradleRunner.create()
@@ -29,7 +31,7 @@ class SpigottoolsPluginFunctionalTest {
         runner.withPluginClasspath()
         runner.withArguments("cleanup")
         runner.withProjectDir(projectDir)
-        val result = runner.build();
+        val result = runner.build()
 
         // Verify the result
         // assertTrue(result.output.contains("Hello from plugin 'com.github.yannicklamprecht.spigottools.greeting'"))

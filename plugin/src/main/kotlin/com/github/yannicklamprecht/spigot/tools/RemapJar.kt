@@ -6,7 +6,6 @@ import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
-import org.gradle.jvm.tasks.Jar
 import java.io.File
 import java.nio.file.Path
 
@@ -27,7 +26,8 @@ abstract class RemapJar : DefaultTask() {
         return libDir.resolve(
             "${project.description}-${project.version}${
                 outputClassifier.map { "-${it}" }.getOrElse("")
-            }.jar")
+            }.jar"
+        )
     }
 
     private val libDir = project.buildDir.resolve("libs")
