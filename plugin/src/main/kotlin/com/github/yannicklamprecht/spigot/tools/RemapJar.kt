@@ -1,6 +1,7 @@
 package com.github.yannicklamprecht.spigot.tools
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.Task
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
@@ -22,12 +23,13 @@ abstract class RemapJar : DefaultTask() {
     @get:Optional
     abstract val outputClassifier: Property<String>
 
-    fun artifact(): File {
-        return libDir.resolve(
-            "${project.description}-${project.version}${
-                outputClassifier.map { "-${it}" }.getOrElse("")
-            }.jar"
-        )
+    @get:Input
+    abstract val inputTask: Property<Task>
+
+
+    private fun artifact(): File {
+        val file = inputTask.get().outputs.files.single()
+        return file.parentFile.resolve("${file.nameWithoutExtension}${outputClassifier.map { "-${it}" }.getOrElse("")}.jar")
     }
 
     private val libDir = project.buildDir.resolve("libs")
@@ -38,7 +40,7 @@ abstract class RemapJar : DefaultTask() {
             return
         }
 
-        val inputFile = project.tasks.getByName("jar").outputs.files.single()
+        val inputFile = inputTask.get().outputs.files.single()
         val tempFile = libDir.resolve("temp.jar")
         remap(
             "--reverse",
@@ -49,6 +51,7 @@ abstract class RemapJar : DefaultTask() {
             obf = false
         )
         logger.lifecycle("Remap from Obf to Spigot")
+
         val artifact = artifact()
         remap(
             inputPath = tempFile,

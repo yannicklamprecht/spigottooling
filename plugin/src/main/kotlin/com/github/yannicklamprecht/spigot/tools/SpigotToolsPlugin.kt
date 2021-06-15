@@ -3,6 +3,7 @@ package com.github.yannicklamprecht.spigot.tools
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.compile.JavaCompile
 import java.net.URL
 import java.nio.file.Path
 
@@ -17,11 +18,11 @@ class SpigotToolsPlugin : Plugin<Project> {
     }
 
     override fun apply(project: Project) {
-
         val extension: SpigotToolsExtension = project.extensions.create(
             "spigotTools",
             SpigotToolsExtension::class.java
         )
+
 
         project.tasks.register("setup") {
             it.group = taskGroup
@@ -49,31 +50,46 @@ class SpigotToolsPlugin : Plugin<Project> {
             it.mojangMapped.set(extension.mojangMapped)
         }
 
-        project.tasks.register("remap", RemapJar::class.java) {
-            it.group = taskGroup
-            it.description = "Remaps the artifact from Mojang Mappings to Spigot mapping."
-            it.outputClassifier.set(extension.outputClassifier)
-            it.spigotVersion.set(extension.spigotVersion)
-            it.mojangMapped.set(extension.mojangMapped)
-        }
-        project.tasks.withType(Jar::class.java) {
-            it.finalizedBy(project.tasks.withType(RemapJar::class.java))
+
+        project.tasks.whenTaskAdded {
+            if(it.name == "jar" && it.enabled){
+                val remapTask = project.tasks.register("remap", RemapJar::class.java) { remapJar ->
+                    // remapJar.group = taskGroup
+                    remapJar.description = "Remaps the artifact from Mojang Mappings to Spigot mapping."
+                    remapJar.outputClassifier.set(extension.outputClassifier)
+                    remapJar.inputTask.set(project.tasks.getByName("jar"))
+                    remapJar.spigotVersion.set(extension.spigotVersion())
+
+                    remapJar.mojangMapped.set(extension.mojangMapped)
+                    remapJar.dependsOn(project.tasks.withType(Jar::class.java))
+                    project.tasks.named("build").get().dependsOn(remapJar)
+                }
+
+                project.plugins.withId("com.github.johnrengelman.shadow") { shadowPlugin ->
+
+                    project.tasks.whenTaskAdded { task ->
+                        if(task.name == "shadowJar" && task.enabled){
+                            remapTask.get().inputTask.set(it)
+                            remapTask.get().setDependsOn(listOf(it))
+                            remapTask.get().finalizedBy(task)
+                            project.tasks.register("shadowJarSpigot") { shadowJarSpigot ->
+                                shadowJarSpigot.group = taskGroup
+                                shadowJarSpigot.description = "ShadowJar but with remapping artifacts before."
+                                shadowJarSpigot.dependsOn(project.tasks.withType(RemapJar::class.java))
+                            }
+
+                            project.tasks.register("shadowJarMojang") { shadowJarMojang ->
+                                shadowJarMojang.group = taskGroup
+                                shadowJarMojang.description = "Simply ShadowJar"
+                            }
+                        }
+                    }
+                }
+
+            }
         }
 
-        project.tasks.register("shadowJarSpigot"){
-            it.group = taskGroup
-            it.description = "ShadowJar but with remapping artifacts before."
-            it.dependsOn(project.tasks.withType(Jar::class.java))
-            it.finalizedBy(project.tasks.getByName("remap"))
-            it.finalizedBy(project.tasks.getByName("shadowJar"))
-        }
 
-        project.tasks.register("shadowJarMojang"){
-            it.group = taskGroup
-            it.description = "Simply ShadowJar"
-            it.dependsOn(project.tasks.withType(Jar::class.java))
-            it.finalizedBy(project.tasks.getByName("shadowJar"))
-        }
     }
 
 }
