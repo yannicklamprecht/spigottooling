@@ -49,7 +49,7 @@ dependencies {
 }
 
 group = "com.github.yannicklamprecht.spigot.tools"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 
 gradlePlugin {
     plugins {
@@ -61,11 +61,6 @@ gradlePlugin {
 }
 
 publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-        }
-    }
     repositories {
         maven {
             group = project.group.toString()
