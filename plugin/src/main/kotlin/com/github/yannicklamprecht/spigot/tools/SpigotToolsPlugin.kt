@@ -23,26 +23,6 @@ class SpigotToolsPlugin : Plugin<Project> {
             SpigotToolsExtension::class.java
         )
 
-        project.tasks.register("buildSpigot", BuildSpigotTask::class.java) {
-            it.group = taskGroup
-            it.description = "Builds Spigot"
-            it.version.set(extension.version)
-            it.mojangMapped.set(extension.mojangMapped)
-        }
-
-        project.tasks.register("remap", RemapJar::class.java) {
-            it.group = taskGroup
-            it.description = "Remaps the artifact from Mojang Mappings to Spigot mapping."
-            it.outputClassifier.set(extension.outputClassifier)
-            it.spigotVersion.set(extension.spigotVersion)
-            it.dependsOn(project.tasks.withType(Jar::class.java))
-            it.mojangMapped.set(extension.mojangMapped)
-        }
-        project.tasks.withType(Jar::class.java) {
-            it.finalizedBy(project.tasks.withType(RemapJar::class.java))
-        }
-
-
         project.tasks.register("setup") {
             it.group = taskGroup
             it.description = "Setups the tools used: SpecialSource, BuildTools"
@@ -60,6 +40,39 @@ class SpigotToolsPlugin : Plugin<Project> {
             it.doLast {
                 tooling.toFile().deleteRecursively()
             }
+        }
+
+        project.tasks.register("buildSpigot", BuildSpigotTask::class.java) {
+            it.group = taskGroup
+            it.description = "Builds Spigot"
+            it.version.set(extension.version)
+            it.mojangMapped.set(extension.mojangMapped)
+        }
+
+        project.tasks.register("remap", RemapJar::class.java) {
+            it.group = taskGroup
+            it.description = "Remaps the artifact from Mojang Mappings to Spigot mapping."
+            it.outputClassifier.set(extension.outputClassifier)
+            it.spigotVersion.set(extension.spigotVersion)
+            it.mojangMapped.set(extension.mojangMapped)
+        }
+        project.tasks.withType(Jar::class.java) {
+            it.finalizedBy(project.tasks.withType(RemapJar::class.java))
+        }
+
+        project.tasks.register("shadowJarSpigot"){
+            it.group = taskGroup
+            it.description = "ShadowJar but with remapping artifacts before."
+            it.dependsOn(project.tasks.withType(Jar::class.java))
+            it.finalizedBy(project.tasks.getByName("remap"))
+            it.finalizedBy(project.tasks.getByName("shadowJar"))
+        }
+
+        project.tasks.register("shadowJarMojang"){
+            it.group = taskGroup
+            it.description = "Simply ShadowJar"
+            it.dependsOn(project.tasks.withType(Jar::class.java))
+            it.finalizedBy(project.tasks.getByName("shadowJar"))
         }
     }
 
